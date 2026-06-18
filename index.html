@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta de Examen</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 30%, #2d1b69 60%, #1a1a4e 100%);
+  min-height: 100vh;
+  overflow: hidden;
+  color: #fff;
+  user-select: none;
+}
+.background-pencils {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.bg-pencil {
+  position: absolute;
+  font-size: 40px;
+  opacity: 0.15;
+  animation: floatPencil linear infinite;
+}
+@keyframes floatPencil {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.2; }
+  90% { opacity: 0.2; }
+  100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+}
+.bg-pencil:nth-child(1) { left: 5%; animation-duration: 18s; font-size: 35px; animation-delay: 0s; }
+.bg-pencil:nth-child(2) { left: 15%; animation-duration: 22s; font-size: 45px; animation-delay: 2s; }
+.bg-pencil:nth-child(3) { left: 25%; animation-duration: 16s; font-size: 30px; animation-delay: 4s; }
+.bg-pencil:nth-child(4) { left: 35%; animation-duration: 20s; font-size: 50px; animation-delay: 1s; }
+.bg-pencil:nth-child(5) { left: 45%; animation-duration: 24s; font-size: 28px; animation-delay: 3s; }
+.bg-pencil:nth-child(6) { left: 55%; animation-duration: 19s; font-size: 42px; animation-delay: 5s; }
+.bg-pencil:nth-child(7) { left: 65%; animation-duration: 21s; font-size: 36px; animation-delay: 0s; }
+.bg-pencil:nth-child(8) { left: 75%; animation-duration: 17s; font-size: 48px; animation-delay: 3.5s; }
+.bg-pencil:nth-child(9) { left: 85%; animation-duration: 23s; font-size: 32px; animation-delay: 6s; }
+.bg-pencil:nth-child(10) { left: 92%; animation-duration: 20s; font-size: 44px; animation-delay: 1.5s; }
+.bg-pencil:nth-child(11) { left: 10%; animation-duration: 25s; font-size: 38px; animation-delay: 7s; }
+.bg-pencil:nth-child(12) { left: 50%; animation-duration: 15s; font-size: 52px; animation-delay: 4.5s; }
+.bg-pencil:nth-child(13) { left: 70%; animation-duration: 22s; font-size: 26px; animation-delay: 8s; }
+.bg-pencil:nth-child(14) { left: 30%; animation-duration: 18s; font-size: 40px; animation-delay: 2.5s; }
+
+.container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 10px 20px;
+}
+
+.title {
+  text-align: center;
+  font-size: clamp(32px, 5vw, 72px);
+  font-weight: 900;
+  letter-spacing: 6px;
+  text-shadow: 0 0 20px rgba(255,255,255,0.3), 2px 2px 8px rgba(0,0,0,0.5);
+  padding: 8px 0;
+  line-height: 1.2;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.wheel-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+#wheelCanvas {
+  width: min(320px, 22vw);
+  height: min(320px, 22vw);
+  border-radius: 50%;
+  box-shadow: 0 0 30px rgba(100,100,255,0.4), inset 0 0 20px rgba(0,0,0,0.3);
+}
+
+.center-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  min-width: 0;
+}
+.timer-display {
+  font-size: clamp(48px, 7vw, 100px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 4px;
+  text-shadow: 0 0 15px rgba(0,200,255,0.4);
+  background: rgba(0,0,0,0.3);
+  padding: 5px 30px;
+  border-radius: 15px;
+  border: 2px solid rgba(100,200,255,0.3);
+}
+.comodin-display {
+  text-align: center;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+}
+.comodin-label {
+  font-size: clamp(18px, 2vw, 28px);
+  color: #ffcc00;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px rgba(255,204,0,0.3);
+  display: none;
+}
+.comodin-text {
+  font-size: clamp(28px, 4.5vw, 60px);
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.3;
+  text-shadow: 0 0 20px rgba(255,255,255,0.3), 2px 2px 4px rgba(0,0,0,0.5);
+  padding: 10px 20px;
+  animation: pulseComodin 0.5s ease-out;
+}
+@keyframes pulseComodin {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.countdown-display {
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 700;
+  display: none;
+  animation: pulseCountdown 1s infinite;
+}
+@keyframes pulseCountdown {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.noise-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 15px;
+  border: 1px solid rgba(255,255,255,0.1);
+  min-width: 140px;
+}
+.noise-label {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #aaa;
+}
+.pencil-container {
+  width: 50px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+}
+.pencil-eraser {
+  width: 28px;
+  height: 8px;
+  background: #e8838a;
+  border-radius: 2px 2px 0 0;
+  flex-shrink: 0;
+  z-index: 2;
+}
+.pencil-band {
+  width: 30px;
+  height: 5px;
+  background: #888;
+  flex-shrink: 0;
+  z-index: 2;
+}
+.pencil-body {
+  width: 30px;
+  min-height: 8px;
+  background: linear-gradient(180deg, #f7d94e, #f5c542);
+  flex-shrink: 0;
+  transition: height 0.12s ease;
+  position: relative;
+  z-index: 2;
+}
+.pencil-tip {
+  width: 0;
+  height: 0;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-bottom: 20px solid #f5deb3;
+  flex-shrink: 0;
+  z-index: 2;
+}
+.pencil-lead {
+  width: 4px;
+  height: 6px;
+  background: #333;
+  border-radius: 0 0 2px 2px;
+  margin-top: -4px;
+  flex-shrink: 0;
+  z-index: 2;
+}
+.noise-bar-bg {
+  position: absolute;
+  bottom: 0;
+  width: 30px;
+  height: 130px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  z-index: 1;
+}
+.noise-level-fill {
+  position: absolute;
+  bottom: 0;
+  width: 30px;
+  height: 0%;
+  border-radius: 3px;
+  transition: height 0.12s ease;
+  z-index: 0;
+}
+
+.sensitivity-control {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.sensitivity-control label {
+  font-size: 11px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.sensitivity-control input[type="range"] {
+  width: 100%;
+  accent-color: #6688ff;
+}
+.noise-db {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.btn-danger {
+  background: #cc3333;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  width: 100%;
+}
+.btn-danger:hover { background: #ff4444; transform: scale(1.05); }
+.btn-danger:active { transform: scale(0.95); }
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 12px 40px;
+  border: none;
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0); }
+.btn-start {
+  background: linear-gradient(135deg, #00c853, #00e676);
+  color: #fff;
+}
+.btn-start:hover { box-shadow: 0 6px 20px rgba(0,200,83,0.4); }
+.btn-pause {
+  background: linear-gradient(135deg, #ff9800, #ffb74d);
+  color: #fff;
+}
+.btn-pause:hover { box-shadow: 0 6px 20px rgba(255,152,0,0.4); }
+.btn-pause.paused { background: linear-gradient(135deg, #4caf50, #66bb6a); }
+.btn-spin {
+  background: linear-gradient(135deg, #ab47bc, #ce93d8);
+  color: #fff;
+}
+.btn-spin:hover { box-shadow: 0 6px 20px rgba(171,71,188,0.4); }
+.btn-reset {
+  background: linear-gradient(135deg, #f44336, #ef5350);
+  color: #fff;
+}
+.btn-reset:hover { box-shadow: 0 6px 20px rgba(244,67,54,0.4); }
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-overlay.show { display: flex; }
+.modal-content {
+  text-align: center;
+  animation: modalIn 0.5s ease-out;
+}
+@keyframes modalIn {
+  0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.modal-comodin {
+  font-size: clamp(32px, 5vw, 64px);
+  font-weight: 800;
+  margin-bottom: 20px;
+  text-shadow: 0 0 30px rgba(255,255,255,0.3);
+}
+.modal-countdown {
+  font-size: clamp(80px, 15vw, 180px);
+  font-weight: 900;
+  color: #ff4444;
+  text-shadow: 0 0 40px rgba(255,68,68,0.5);
+  animation: countPulse 0.5s ease-in-out infinite alternate;
+}
+@keyframes countPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+.modal-hint {
+  font-size: 24px;
+  color: #ffcc00;
+  margin-top: 15px;
+}
+
+@media (max-width: 900px) {
+  .content { flex-direction: column; gap: 15px; }
+  .wheel-section { order: 2; }
+  .center-section { order: 1; }
+  .noise-section { order: 3; flex-direction: row; flex-wrap: wrap; justify-content: center; min-width: 0; width: 100%; }
+  #wheelCanvas { width: min(200px, 40vw); height: min(200px, 40vw); }
+  .noise-section { padding: 10px; }
+  .pencil-container { height: 100px; }
+  .noise-bar-bg { height: 80px; }
+}
+
+@media (max-width: 600px) {
+  .btn { padding: 8px 20px; font-size: 16px; }
+  .title { letter-spacing: 3px; }
+  .comodin-text { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="background-pencils" id="bgPencils"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <div class="modal-comodin" id="modalComodin"></div>
+    <div class="modal-countdown" id="modalCountdown"></div>
+    <div class="modal-hint">¡Tiempo para usar tu comodín!</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title" id="mainTitle">RULETA DE EXAMEN</div>
+
+  <div class="content">
+    <div class="wheel-section">
+      <canvas id="wheelCanvas" width="400" height="400"></canvas>
+    </div>
+
+    <div class="center-section">
+      <div class="timer-display" id="timerDisplay">00:00</div>
+      <div class="comodin-display">
+        <div class="comodin-label" id="comodinLabel">✦ Comodín ✦</div>
+        <div class="comodin-text" id="comodinText">Presiona "Iniciar Examen"<br>para comenzar</div>
+        <div class="countdown-display" id="countdownDisplay"></div>
+      </div>
+    </div>
+
+    <div class="noise-section">
+      <div class="noise-label">📢 Ruido</div>
+      <div class="pencil-container">
+        <div class="pencil-eraser"></div>
+        <div class="pencil-band"></div>
+        <div class="pencil-body" id="pencilBody"></div>
+        <div class="pencil-tip"></div>
+        <div class="pencil-lead"></div>
+        <div class="noise-bar-bg"></div>
+        <div class="noise-level-fill" id="noiseFill"></div>
+      </div>
+      <div class="noise-db" id="noiseDb">0 dB</div>
+      <div class="sensitivity-control">
+        <label for="sensSlider">Sensibilidad</label>
+        <input type="range" id="sensSlider" min="0" max="100" value="40">
+      </div>
+      <button class="btn-danger" id="btnNoisy">🔇 Muy Ruidoso</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" id="btnStart">▶ Iniciar Examen</button>
+    <button class="btn btn-pause" id="btnPause" disabled>⏸ Pausa</button>
+    <button class="btn btn-spin" id="btnSpin" disabled>🎲 Girar Ahora</button>
+    <button class="btn btn-reset" id="btnReset" disabled>⟳ Reiniciar</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const COMODINES = [
+  { id: 1, short: 'S.Book',   full: '\uD83D\uDCD6 \u00A1Ver el Student Book!',           hasTimer: true  },
+  { id: 2, short: 'Libreta',  full: '\uD83D\uDCD3 \u00A1Ver tu Libreta!',                hasTimer: true  },
+  { id: 3, short: 'Workbook', full: '\uD83D\uDCD8 \u00A1Ver el Workbook!',               hasTimer: true  },
+  { id: 4, short: 'C.Frente', full: '\uD83D\uDE4B \u00A1Preguntarle al compa\u00F1ero del frente!', hasTimer: false },
+  { id: 5, short: 'Tchr 1-5',  full: '\uD83D\uDC69\u200D\uD83C\uDFEB \u00A1Preguntarle a la Teacher! (Alumnos 1-5)',  hasTimer: false },
+  { id: 6, short: 'Tchr 6-10', full: '\uD83D\uDC69\u200D\uD83C\uDFEB \u00A1Preguntarle a la Teacher! (Alumnos 6-10)', hasTimer: false },
+  { id: 7, short: 'Tchr11-15', full: '\uD83D\uDC69\u200D\uD83C\uDFEB \u00A1Preguntarle a la Teacher! (Alumnos 11-15)', hasTimer: false },
+  { id: 8, short: 'Tchr16-20', full: '\uD83D\uDC69\u200D\uD83C\uDFEB \u00A1Preguntarle a la Teacher! (Alumnos 16-20)', hasTimer: false },
+  { id: 9, short: 'Tchr 21+',  full: '\uD83D\uDC69\u200D\uD83C\uDFEB \u00A1Preguntarle a la Teacher! (Alumnos 21+)', hasTimer: false },
+  { id: 10, short: 'C.Atr\u00E1s', full: '\uD83D\uDE4B \u00A1Preguntarle al compa\u00F1ero de atr\u00E1s!', hasTimer: false },
+  { id: 11, short: 'Pista',    full: '\uD83D\uDCA1 \u00A1La Teacher da una pista! (1 pregunta)', hasTimer: false }
+];
+
+const SEGMENT_COLORS = [
+  '#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#1abc9c',
+  '#3498db', '#9b59b6', '#e84393', '#00b894', '#6c5ce7', '#fd79a8'
+];
+
+const TITLE_COLORS = [
+  '#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0077FF',
+  '#4B0082', '#FF1493', '#FF4500', '#FFD700', '#32CD32',
+  '#00BFFF', '#8A2BE2', '#FF6347', '#7FFF00', '#FF69B4', '#00CED1'
+];
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  running: false,
+  paused: false,
+  generalTime: 0,
+  comodinActive: false,
+  comodinCountdown: 0,
+  currentComodin: null,
+  nextSpinAt: 300,
+  spinCount: 0,
+  isSpinning: false,
+  wheelAngle: 0,
+  noiseLevel: 0,
+  micConnected: false,
+  micStream: null,
+  audioCtx: null,
+  analyser: null,
+  remainingComodines: [],
+};
+
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+const timerDisplay = document.getElementById('timerDisplay');
+const comodinLabel = document.getElementById('comodinLabel');
+const comodinText = document.getElementById('comodinText');
+const countdownDisplay = document.getElementById('countdownDisplay');
+const btnStart = document.getElementById('btnStart');
+const btnPause = document.getElementById('btnPause');
+const btnReset = document.getElementById('btnReset');
+const btnNoisy = document.getElementById('btnNoisy');
+const sensSlider = document.getElementById('sensSlider');
+const noiseDb = document.getElementById('noiseDb');
+const pencilBody = document.getElementById('pencilBody');
+const noiseFill = document.getElementById('noiseFill');
+const modalOverlay = document.getElementById('modalOverlay');
+const modalComodin = document.getElementById('modalComodin');
+const modalCountdown = document.getElementById('modalCountdown');
+
+// ============================================================
+// BACKGROUND PENCILS
+// ============================================================
+(function initBgPencils() {
+  const container = document.getElementById('bgPencils');
+  for (let i = 0; i < 25; i++) {
+    const span = document.createElement('span');
+    span.className = 'bg-pencil';
+    span.textContent = '\u270F\uFE0F';
+    span.style.left = Math.random() * 95 + '%';
+    span.style.fontSize = (20 + Math.random() * 40) + 'px';
+    span.style.animationDuration = (12 + Math.random() * 20) + 's';
+    span.style.animationDelay = Math.random() * 20 + 's';
+    span.style.opacity = 0.05 + Math.random() * 0.12;
+    container.appendChild(span);
+  }
+})();
+
+// ============================================================
+// COLORFUL TITLE
+// ============================================================
+(function colorTitle() {
+  const el = document.getElementById('mainTitle');
+  const text = el.textContent;
+  let html = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === ' ') { html += ' '; continue; }
+    html += '<span style="color:' + TITLE_COLORS[i % TITLE_COLORS.length] + '">' + ch + '</span>';
+  }
+  el.innerHTML = html;
+})();
+
+// ============================================================
+// SOUND EFFECTS (Web Audio API)
+// ============================================================
+function getAudioCtx() {
+  if (state.audioCtx && state.audioCtx.state === 'suspended') {
+    state.audioCtx.resume();
+  }
+  return state.audioCtx;
+}
+
+function playNote(freq, duration, delay, type, vol) {
+  var ctx = getAudioCtx();
+  if (!ctx) return;
+  var t = ctx.currentTime + delay;
+  var osc = ctx.createOscillator();
+  var g = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol || 0.25, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  osc.connect(g);
+  g.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + duration);
+}
+
+function playSpinSound() {
+  var ctx = getAudioCtx();
+  if (!ctx) return;
+  var t = ctx.currentTime;
+  // White noise swish
+  var sr = ctx.sampleRate;
+  var len = sr * 0.35;
+  var buf = ctx.createBuffer(1, len, sr);
+  var d = buf.getChannelData(0);
+  for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i/len);
+  var noise = ctx.createBufferSource();
+  noise.buffer = buf;
+  var filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(1200, t);
+  filter.frequency.exponentialRampToValueAtTime(200, t + 0.35);
+  filter.Q.value = 0.8;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.12, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+  noise.connect(filter); filter.connect(g); g.connect(ctx.destination);
+  noise.start(t); noise.stop(t + 0.35);
+}
+
+function playTimedStartSound() {
+  playNote(523.25, 0.25, 0, 'sine', 0.25);
+  playNote(659.25, 0.25, 0.12, 'sine', 0.25);
+  playNote(783.99, 0.35, 0.25, 'sine', 0.25);
+}
+
+function playTimedEndSound() {
+  playNote(880, 0.7, 0, 'sine', 0.2);
+  playNote(880, 0.7, 0.04, 'sine', 0.08);
+}
+
+function playAllDoneSound() {
+  playNote(523.25, 0.18, 0, 'sine', 0.2);
+  playNote(659.25, 0.18, 0.1, 'sine', 0.2);
+  playNote(783.99, 0.18, 0.2, 'sine', 0.2);
+  playNote(1046.5, 0.4, 0.3, 'sine', 0.25);
+  playNote(1318.5, 0.4, 0.42, 'sine', 0.15);
+}
+
+// ============================================================
+// WHEEL DRAWING
+// ============================================================
+function drawWheel(angle, comodines) {
+  if (!comodines) comodines = state.remainingComodines;
+  const w = canvas.width, h = canvas.height;
+  const cx = w/2, cy = h/2, r = w/2 - 15;
+  const n = comodines.length;
+  if (n === 0) {
+    ctx.clearRect(0, 0, w, h);
+    return;
+  }
+  const segAngle = (2 * Math.PI) / n;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Outer glow
+  const grad = ctx.createRadialGradient(cx, cy, r-10, cx, cy, r+10);
+  grad.addColorStop(0, 'rgba(255,255,255,0.1)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r+10, 0, 2*Math.PI);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  for (let i = 0; i < n; i++) {
+    const startAngle = angle + i * segAngle;
+    const endAngle = startAngle + segAngle;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const midAngle = startAngle + segAngle/2;
+    const textR = r * 0.65;
+    const tx = cx + Math.cos(midAngle) * textR;
+    const ty = cy + Math.sin(midAngle) * textR;
+
+    ctx.save();
+    ctx.translate(tx, ty);
+    ctx.rotate(midAngle + Math.PI/2);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold ' + Math.floor(r/13) + 'px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = 3;
+    ctx.fillText(comodines[i].short, 0, 0);
+    ctx.restore();
+  }
+
+  // Center
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.18, 0, 2 * Math.PI);
+  const cGrad = ctx.createRadialGradient(cx-5, cy-5, 0, cx, cy, r*0.18);
+  cGrad.addColorStop(0, '#fff');
+  cGrad.addColorStop(0.5, '#f0f0f0');
+  cGrad.addColorStop(1, '#ccc');
+  ctx.fillStyle = cGrad;
+  ctx.fill();
+  ctx.strokeStyle = '#999';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#333';
+  ctx.font = 'bold ' + Math.floor(r/9) + 'px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('\u2726', cx, cy);
+
+  // Pointer
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r - 8);
+  ctx.lineTo(cx - 14, cy - r - 28);
+  ctx.lineTo(cx + 14, cy - r - 28);
+  ctx.closePath();
+  ctx.fillStyle = '#ff4444';
+  ctx.fill();
+  ctx.strokeStyle = '#cc0000';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy - r - 8, 5, 0, 2 * Math.PI);
+  ctx.fillStyle = '#ff4444';
+  ctx.fill();
+  ctx.strokeStyle = '#cc0000';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+// ============================================================
+// WHEEL SPIN
+// ============================================================
+function spinWheel(callback) {
+  if (state.isSpinning) return;
+  if (state.remainingComodines.length === 0) {
+    return;
+  }
+  state.isSpinning = true;
+  playSpinSound();
+
+  const list = state.remainingComodines;
+  const targetIdx = Math.floor(Math.random() * list.length);
+  const n = list.length;
+  const segAngle = (2 * Math.PI) / n;
+  // Middle of target segment should align with pointer (top = -PI/2)
+  const fullSpins = 5 + Math.floor(Math.random() * 4);
+  const pointerAngle = -Math.PI / 2;
+  const targetMid = targetIdx * segAngle + segAngle / 2;
+  const totalAdd = fullSpins * 2 * Math.PI + (pointerAngle - targetMid);
+  // Normalize so we always move forward
+  const targetAngle = state.wheelAngle + totalAdd;
+  while (targetAngle <= state.wheelAngle) targetAngle + 2*Math.PI;
+
+  const startAngle = state.wheelAngle;
+  const totalRotation = targetAngle - startAngle;
+  const duration = 3000 + Math.random() * 1200;
+  const startTime = performance.now();
+
+  function animateSpin(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    state.wheelAngle = startAngle + totalRotation * eased;
+    drawWheel(state.wheelAngle);
+
+    if (progress < 1) {
+      requestAnimationFrame(animateSpin);
+    } else {
+      state.wheelAngle = targetAngle;
+      drawWheel(state.wheelAngle, state.remainingComodines);
+      state.isSpinning = false;
+      if (callback) callback(targetIdx);
+    }
+  }
+  requestAnimationFrame(animateSpin);
+}
+
+// ============================================================
+// TIMER & GAME LOGIC
+// ============================================================
+let timerInterval = null;
+
+function startExam() {
+  state.running = true;
+  state.paused = false;
+  state.generalTime = 0;
+  state.nextSpinAt = 240;
+  state.spinCount = 0;
+  state.currentComodin = null;
+  state.comodinActive = false;
+  state.remainingComodines = COMODINES.map(function(c) { return Object.assign({}, c); });
+  state.wheelAngle = Math.random() * 2 * Math.PI;
+
+  btnStart.disabled = true;
+  btnPause.disabled = false;
+  btnSpin.disabled = false;
+  btnReset.disabled = false;
+  btnPause.textContent = '\u23F8 Pausa';
+  btnPause.classList.remove('paused');
+  comodinText.textContent = '\uD83C\uDFAF \u00A1Girando ruleta...!';
+  comodinLabel.style.display = 'none';
+
+  drawWheel(state.wheelAngle, state.remainingComodines);
+  timerInterval = setInterval(tick, 100);
+}
+
+function tick() {
+  // Countdown for book comodines takes priority
+  if (state.comodinActive) {
+    state.comodinCountdown -= 0.1;
+    if (state.comodinCountdown <= 0) {
+      playTimedEndSound();
+      state.comodinActive = false;
+      modalOverlay.classList.remove('show');
+      state.nextSpinAt = state.generalTime + 240;
+      comodinText.textContent = '\u23F0 \u00A1Tiempo de comod\u00EDn terminado!';
+      comodinLabel.style.display = 'none';
+      countdownDisplay.style.display = 'none';
+    } else {
+      updateComodinCountdownDisplay();
+    }
+    return;
+  }
+
+  if (!state.running || state.paused) return;
+
+  state.generalTime += 0.1;
+
+  // Check if it's time to spin (prevent re-trigger during spin)
+  if (state.generalTime >= state.nextSpinAt && !state.isSpinning) {
+    triggerSpin();
+  }
+
+  updateTimerDisplay();
+}
+
+function triggerSpin() {
+  state.spinCount++;
+  // Immediately schedule next spin so we don't re-trigger
+  state.nextSpinAt = state.generalTime + 240;
+
+  spinWheel(function(idx) {
+    const comodin = state.remainingComodines.splice(idx, 1)[0];
+    state.currentComodin = comodin;
+    comodinLabel.style.display = 'block';
+    comodinLabel.textContent = '\u2726 Comod\u00EDn \u2726';
+    comodinText.textContent = comodin.full;
+    comodinText.style.animation = 'none';
+    void comodinText.offsetHeight;
+    comodinText.style.animation = 'pulseComodin 0.5s ease-out';
+
+    // Show remaining count
+    comodinLabel.textContent += '  (' + state.remainingComodines.length + ' restantes)';
+
+    if (comodin.hasTimer) {
+      playTimedStartSound();
+      state.comodinActive = true;
+      state.comodinCountdown = 60;
+      modalComodin.textContent = comodin.full;
+      modalCountdown.textContent = formatTime(state.comodinCountdown);
+      modalCountdown.style.color = '#ffcc00';
+      modalOverlay.classList.add('show');
+      countdownDisplay.style.display = 'block';
+      updateComodinCountdownDisplay();
+    } else {
+      countdownDisplay.style.display = 'none';
+    }
+
+    // If no more comodines, redraw empty wheel and pause automation
+    if (state.remainingComodines.length === 0) {
+      playAllDoneSound();
+      drawWheel(state.wheelAngle, []);
+      comodinText.textContent = '\uD83C\uDF89 \uD83C\uDF7E \u00A1Buena suerte para todos! \uD83E\uDD73 \uD83D\uDC69\u200D\uD83C\uDFEB';
+      comodinLabel.style.display = 'none';
+      state.nextSpinAt = Infinity;
+      btnSpin.disabled = true;
+    }
+  });
+}
+
+function updateTimerDisplay() {
+  timerDisplay.textContent = formatTime(state.generalTime);
+}
+
+function updateComodinCountdownDisplay() {
+  const secs = Math.ceil(state.comodinCountdown);
+  const str = formatTime(secs);
+  countdownDisplay.textContent = '\u23F3 ' + str;
+  modalCountdown.textContent = str;
+  const color = secs <= 10 ? '#ff4444' : (secs <= 20 ? '#ffaa00' : '#ffcc00');
+  countdownDisplay.style.color = color;
+  modalCountdown.style.color = color;
+}
+
+function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function pauseExam() {
+  if (!state.running) return;
+  state.paused = !state.paused;
+  if (state.paused) {
+    btnPause.textContent = '\u25B6 Reanudar';
+    btnPause.classList.add('paused');
+    comodinText.textContent = '\u23F8 EXAMEN EN PAUSA';
+    comodinLabel.style.display = 'none';
+    countdownDisplay.style.display = 'none';
+  } else {
+    btnPause.textContent = '\u23F8 Pausa';
+    btnPause.classList.remove('paused');
+  }
+}
+
+function resetExam() {
+  clearInterval(timerInterval);
+  state.running = false;
+  state.paused = false;
+  state.generalTime = 0;
+  state.comodinActive = false;
+  state.currentComodin = null;
+  state.nextSpinAt = 240;
+  state.spinCount = 0;
+  state.isSpinning = false;
+  state.remainingComodines = [];
+  modalOverlay.classList.remove('show');
+
+  timerDisplay.textContent = '00:00';
+  comodinText.textContent = 'Presiona "Iniciar Examen"\npara comenzar';
+  comodinLabel.style.display = 'none';
+  countdownDisplay.style.display = 'none';
+  btnStart.disabled = false;
+  btnPause.disabled = true;
+  btnSpin.disabled = true;
+  btnReset.disabled = true;
+  btnPause.textContent = '\u23F8 Pausa';
+  btnPause.classList.remove('paused');
+  state.wheelAngle = Math.random() * 2 * Math.PI;
+  drawWheel(state.wheelAngle);
+}
+
+function noisyReset() {
+  if (state.running) {
+    resetExam();
+    document.body.style.background = 'linear-gradient(135deg, #441111, #661111, #441111)';
+    setTimeout(function() {
+      document.body.style.background = 'linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 30%, #2d1b69 60%, #1a1a4e 100%)';
+    }, 600);
+  }
+}
+
+// ============================================================
+// MICROPHONE
+// ============================================================
+async function initMicrophone() {
+  try {
+    state.micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    state.analyser = state.audioCtx.createAnalyser();
+    state.analyser.fftSize = 256;
+    const source = state.audioCtx.createMediaStreamSource(state.micStream);
+    source.connect(state.analyser);
+    state.micConnected = true;
+    readMic();
+  } catch (err) {
+    console.warn('Mic not available:', err);
+    noiseDb.textContent = '\uD83C\uDFA4 Sin mic';
+  }
+}
+
+function readMic() {
+  if (!state.micConnected || !state.analyser) return;
+  const dataArray = new Uint8Array(state.analyser.frequencyBinCount);
+  state.analyser.getByteTimeDomainData(dataArray);
+
+  let sum = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    const val = (dataArray[i] - 128) / 128;
+    sum += val * val;
+  }
+  const rms = Math.sqrt(sum / dataArray.length);
+  const sensitivity = parseFloat(sensSlider.value) / 100;
+  const level = Math.min(rms * sensitivity * 8, 1);
+
+  state.noiseLevel = state.noiseLevel * 0.7 + level * 0.3;
+
+  const db = Math.round(state.noiseLevel * 60);
+  noiseDb.textContent = db + ' dB';
+
+  // Pencil body grows with noise
+  const pct = Math.max(state.noiseLevel * 100, 3);
+  pencilBody.style.height = Math.min(Math.max(pct * 0.9, 5), 120) + 'px';
+
+  // Fill bar color gradient
+  const pctFill = Math.min(pct, 100);
+  noiseFill.style.height = pctFill + '%';
+  if (state.noiseLevel > 0.7) {
+    noiseFill.style.background = 'linear-gradient(180deg, #ff4444, #cc2222)';
+    noiseDb.style.color = '#ff4444';
+  } else if (state.noiseLevel > 0.4) {
+    noiseFill.style.background = 'linear-gradient(180deg, #ffaa00, #dd8800)';
+    noiseDb.style.color = '#ffaa00';
+  } else {
+    noiseFill.style.background = 'linear-gradient(180deg, #44cc44, #22aa22)';
+    noiseDb.style.color = '#44ff44';
+  }
+
+  requestAnimationFrame(readMic);
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+btnStart.addEventListener('click', function() {
+  if (state.audioCtx && state.audioCtx.state === 'suspended') {
+    state.audioCtx.resume();
+  }
+  startExam();
+});
+
+btnPause.addEventListener('click', pauseExam);
+btnSpin.addEventListener('click', function() {
+  if (state.running && !state.paused && !state.isSpinning && !state.comodinActive) {
+    triggerSpin();
+  }
+});
+btnReset.addEventListener('click', resetExam);
+btnNoisy.addEventListener('click', noisyReset);
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === ' ' || e.key === 'Escape') {
+    e.preventDefault();
+    if (state.running) pauseExam();
+  }
+  if (e.key === 'r' && !btnStart.disabled) startExam();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+state.remainingComodines = COMODINES.map(function(c) { return Object.assign({}, c); });
+drawWheel(state.wheelAngle, state.remainingComodines);
+initMicrophone();
+</script>
+</body>
+</html>
